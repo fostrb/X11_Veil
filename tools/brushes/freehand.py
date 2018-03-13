@@ -1,5 +1,5 @@
 import cairo
-from utils.brushes.brush import Brush
+from tools.brushes.brush import Brush
 
 class FreehandBrush(Brush):
     def __init__(self, event, width=8, color=None):
@@ -11,6 +11,9 @@ class FreehandBrush(Brush):
             self.color = self.random_color_transparent(.5)
         self.stroke = []
         self.stroke.append((event.x, event.y))
+
+    def mouse_secondary(self, veil, event):
+        self.cancel(veil)
 
     def mouse_move(self, veil, event):
         self.stroke.append((event.x, event.y))

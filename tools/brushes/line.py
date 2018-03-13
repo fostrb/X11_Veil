@@ -1,5 +1,5 @@
 import cairo
-from utils.brushes import *
+from tools.brushes import Brush
 
 
 class LineBrush(Brush):
@@ -11,10 +11,13 @@ class LineBrush(Brush):
         else:
             self.color = self.random_color_transparent(.5)
 
-        self.x_begin = event.x
-        self.y_begin = event.y
+        self.x_origin = event.x
+        self.y_origin = event.y
         self.x_end = event.x
         self.y_end = event.y
+
+    def mouse_secondary(self, veil, event):
+        self.cancel(veil)
 
     def mouse_move(self, veil, event):
         self.x_end = event.x
@@ -29,6 +32,6 @@ class LineBrush(Brush):
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         ctx.set_line_width(self.width)
         ctx.set_source_rgba(*self.color)
-        ctx.move_to(self.x_begin, self.y_begin)
+        ctx.move_to(self.x_origin, self.y_origin)
         ctx.line_to(self.x_end, self.y_end)
         ctx.stroke()

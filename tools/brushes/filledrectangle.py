@@ -1,5 +1,5 @@
 import cairo
-from utils.brushes.brush import Brush
+from tools.brushes.brush import Brush
 
 
 class FilledRectangleBrush(Brush):
@@ -27,6 +27,9 @@ class FilledRectangleBrush(Brush):
     def mouse_release(self, veil, event):
         self.finish(veil)
         veil.queue_draw()
+
+    def mouse_secondary(self, veil, event):
+        self.cancel(veil)
 
     def draw(self, ctx):
         size_x = self.x_end - self.x_begin
