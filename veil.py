@@ -1,16 +1,15 @@
+from utils.brushes import *
+from tools.brush_selector import *
 import signal
 import sys
 import logging
-import cairo
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, xlib, Gdk
+import gi; gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk
 from gi.repository import GdkX11
-import random
-from sys import platform as _platform
 
-if _platform != "linux" or _platform == "linux2":
-    sys.exit("No.")
+import cairo
+
+
 
 RANDOM_BRUSH_COLORS = True
 BRUSH_ALPHA = .5
@@ -33,14 +32,16 @@ Never thread this. I'm not kidding.
 -Add more type hinting for python IDEs
 
 Functionality:
--Tell Veil to toggle active from an external process (and hotkey that to a keypress)
+-Tell Veil to toggle active from an external process (and hot-key that to a keypress)
 
--DONE: Get signals propagating 'through' panes
+-Brush selector
+
+-DONE: Get signals propagating 'through' veil
 -SORTA DONE: Abstract and de-couple drawing before this stuff.
     -Mouse input drawing
-        -line by coords
-        -rect by coords
         -text input
+        -DONE: line by coords
+        -DONE: rect by coords
         -DONE: freehand
 
 Fixes:
@@ -50,74 +51,82 @@ Aesthetics:
 -The bar looks like garbage, mostly the text part.
     -Maybe just make the border a pixel bigger.
 -run the 'good' curse removing script
-'''
 
+
+BUGS:
+-'button-press-event' being sent twice per click.
+'''
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 
-class Brush(object):
-    def __init__(self, width, rgba_color):
-        self.width = width
-        self.rgba_color = rgba_color
-        self.stroke = []
-
-    def add_point(self, point):
-        self.stroke.append(point)
-
-
 class Veil(Gtk.Window):
     def __init__(self, title='veil'):
         super(Veil, self).__init__()
-        self.CURRENTLY_ACTIVE = True
         self.connect("destroy", Gtk.main_quit)
         self.brushes = []
-        self.set_size_request(720, 480) #appears un-resizeable beneath these dimensions; find another function
         self.set_title(title)
         self.screen = self.get_screen() # type: GdkX11.X11Screen
+        s = Gdk.Screen.get_default()
+
+        self.set_size_request(s.get_width(), s.get_height())  # appears un-resizeable beneath these dimensions; find another function
+        self.active_brush = None
+        self.transient = False
 
         visual = self.screen.get_rgba_visual()
         if visual and self.screen.is_composited():
             self.set_visual(visual)
-            #self.input_shape_combine_region(cairo.Region())
+            if self.transient:
+                self.input_shape_combine_region(cairo.Region())
 
-        self.set_decorated(True)
+        self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_keep_above(True)
-        self.connect('draw', self.draw_sig)
+        self.connect('draw', self.draw)
 
-        #self.fullscreen()
+        self.fullscreen()
 
-        self.connect('motion-notify-event', self.mouse_move)
         self.connect('button-press-event', self.mouse_press)
+        self.connect('motion-notify-event', self.mouse_move)
         self.connect('button-release-event', self.mouse_release)
+        self.connect('key-press-event', self.key_press)
+        self.connect('key-release-event', self.key_release)
         self.set_events(self.get_events() |
                         Gdk.EventMask.BUTTON_PRESS_MASK |
                         Gdk.EventMask.POINTER_MOTION_MASK |
-                        Gdk.EventMask.BUTTON_RELEASE_MASK)
+                        Gdk.EventMask.BUTTON_RELEASE_MASK |
+                        Gdk.EventMask.KEY_PRESS_MASK |
+                        Gdk.EventMask.KEY_RELEASE_MASK)
+
         self.show()
 
-    def toggle_active(self):
-        if self.CURRENTLY_ACTIVE:
+    def toggle_transient(self):
+        if self.transient:
             self.input_shape_combine_region(cairo.Region())
-            self.CURRENTLY_ACTIVE = False
+            self.transient = True
         else:
             self.input_shape_combine_region(None)
-            self.CURRENTLY_ACTIVE = True
+            self.transient = False
 
-    def draw_sig(self, widget, ctx):
+    def draw(self, widget, ctx):
         ctx.set_source_rgba(0, 0, 0, 0)
         ctx.rectangle(0, 0, *widget.get_size())
         ctx.set_operator(cairo.OPERATOR_CLEAR)
         ctx.fill()
-        ##draw shit here
         ctx.set_operator(cairo.OPERATOR_OVER)
-        self.brush_draw(ctx)
-        if self.CURRENTLY_ACTIVE:
+        self.draw_brushes(ctx)
+        if self.transient:
             self.draw_border(ctx)
-            self.draw_header(ctx)
+            #self.draw_header(ctx)
 
+    def draw_brushes(self, ctx):
+        for brush in self.brushes:
+            brush.draw(ctx)
+        if self.active_brush:
+            self.active_brush.draw(ctx)
+
+#-header stuff-----------------------------------------------------------------
     def draw_border(self, ctx):
         ctx.set_line_width(2)
         ctx.set_source_rgb(0, 1, 0)
@@ -136,44 +145,48 @@ class Veil(Gtk.Window):
             ctx.move_to(0, 13)
             ctx.show_text("Veil")
             ctx.stroke()
+#------------------------------------------------------------------------------
 
-    def brush_draw(self, cr):
-        #cr.set_operator(cairo.OPERATOR_SOURCE)#gets rid over overlap, but problematic with multiple colors
-        for brush in self.brushes:
-            cr.set_source_rgba(*brush.rgba_color)
-            cr.set_line_width(brush.width)
-            cr.set_line_cap(1)
-            cr.set_line_join(cairo.LINE_JOIN_ROUND)
-            cr.new_path()
-            for x, y in brush.stroke:
-                cr.line_to(x, y)
-            cr.stroke()
+#-event handling--------------------------------------------------------------
+    def mouse_press(self, widget, event):
+        if event.button == Gdk.BUTTON_PRIMARY:
+            if not self.active_brush:
+                self.active_brush = FilledRectangleBrush(event)
+                #self.active_brush = FreehandBrush(event)
+                #self.active_brush = LineBrush(event)
+        elif event.button == Gdk.BUTTON_SECONDARY:
+            if not self.active_brush:
+                pass
+            else:
+                self.active_brush.mouse_secondary()
 
     def mouse_move(self, widget, event):
         if event.state & Gdk.EventMask.BUTTON_PRESS_MASK:
-            curr_brush = self.brushes[-1]
-            curr_brush.add_point((event.x, event.y))
-            widget.queue_draw()
-
-    def mouse_press(self, widget, event):
-        if event.button == Gdk.BUTTON_PRIMARY:
-            if RANDOM_BRUSH_COLORS:
-                brush = Brush(10, (random.random(), random.random(), random.random(), 0.5))
-            else:
-                brush = Brush(10, COLOR_RED)
-            brush.add_point((event.x, event.y))
-            self.brushes.append(brush)
-            widget.queue_draw()
-        elif event.button == Gdk.BUTTON_SECONDARY:
-            #self.brushes = []
-            self.brushes.pop()
+            if self.active_brush:
+                self.active_brush.mouse_move(self, event)
 
     def mouse_release(self, widget, event):
-        widget.queue_draw()
+        if self.active_brush:
+            self.active_brush.mouse_release(self, event)
+            self.active_brush = None
+
+    def key_press(self, widget, event):
+        key = Gdk.keyval_name(event.keyval)
+        if key == 'Escape':
+            Gtk.main_quit()
+        elif key == 'z':
+            if Gdk.ModifierType.CONTROL_MASK:
+                if len(self.brushes) > 0:
+                    self.brushes.pop()
+                    self.queue_draw()
+
+    def key_release(self, widget, event):
+        key = Gdk.keyval_name(event.keyval)
+#------------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = Veil()
     Gtk.main()
-    sys.exit(exit_status)
+    sys.exit(0)
