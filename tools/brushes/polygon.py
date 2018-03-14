@@ -28,8 +28,6 @@ class PolygonBrush(Brush):
         self.y_current = event.y
 
         self.points = []
-        #self.add_point(self.x_origin, self.y_origin)
-        #self.polygon.append((self.x_origin, self.y_origin))
         self.capturing_movement = True
 
     def mouse_move(self, veil, event):

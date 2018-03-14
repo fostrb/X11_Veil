@@ -1,6 +1,7 @@
 import random
 from tools.tool import Tool
 
+
 class Brush(Tool):
     def __init__(self, *args, sensitivity=0):
         super(Brush, self).__init__()
@@ -27,12 +28,12 @@ class Brush(Tool):
 
     @staticmethod
     def cancel(veil):
-        veil.active_brush = None
+        veil.active_tool = None
         veil.queue_draw()
 
     def finish(self, veil):
         veil.brushes.append(self)
-        veil.active_brush = None
+        veil.active_tool = None
         veil.queue_draw()
 
     @staticmethod

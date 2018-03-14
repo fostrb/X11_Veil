@@ -17,3 +17,6 @@ class Tool:
 
     def mouse_release(self, veil, event):
         pass
+
+    def execute(self, veil, ctx):
+        pass
