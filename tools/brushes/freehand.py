@@ -1,6 +1,7 @@
 import cairo
 from tools.brushes.brush import Brush
 
+
 class FreehandBrush(Brush):
     def __init__(self, event, width=8, color=None):
         super(FreehandBrush, self).__init__()

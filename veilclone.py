@@ -63,8 +63,10 @@ class Veil(Gtk.Window):
         #self.brush_options = [NewLineBrush]
         self.brush_id = 0
         self.brushes = []
+        self.brushes.append(NewPolygonBrush())
         self.brushes.append(NewFilledRectangleBrush())
         self.brushes.append(NewLineBrush())
+        self.brushes.append(NewFreehandBrush())
         self.active_tool = self.brushes[0]
 
         self.connect("destroy", Gtk.main_quit)

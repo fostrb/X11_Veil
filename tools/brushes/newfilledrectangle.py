@@ -13,6 +13,7 @@ class RectangleImage():
         self.x_current = x
         self.y_current = y
 
+
 class NewFilledRectangleBrush(Brush):
     def __init__(self, edge_width=2, edge_color=None, fill_color=None):
         super(NewFilledRectangleBrush, self).__init__()
