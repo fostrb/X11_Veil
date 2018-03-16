@@ -23,16 +23,20 @@ TODO:
 
 Functionality:
 -Tell Veil to toggle active from an external process (and hot-key that to a keypress)
+    Look into Guake source code for key-binding + settings
 
--Brush selector
+-(better) brush selector
 
--DONE: Get signals propagating 'through' veil
--SORTA DONE: Abstract and de-couple drawing before this stuff.
-    -Mouse input drawing
+-Tools:
+    -Brushes to write:
         -text input
-        -DONE: line by coords
-        -DONE: rect by coords
-        -DONE: freehand
+    -Transformers:
+        -Point drag+translate of existing vectors
+            --(requires modification of existing brushes)
+        -Drag individual vectors
+            --(requires slight modification of existing brushes)
+    -Selectors
+        -Define scope in relation to other tools and decide if necessary.
 
 Fixes:
 -Better size-setting for the main gtk window
@@ -40,7 +44,6 @@ Fixes:
 Aesthetics:
 -The bar looks like garbage, mostly the text part.
     -Maybe just make the border a pixel bigger.
--run the 'good' curse removing script
 
 
 BUGS:
@@ -54,24 +57,30 @@ LOG = logging.getLogger(__name__)
 class Veil(Gtk.Window):
     def __init__(self, title='veil'):
         super(Veil, self).__init__()
-        self.brush_options = [PolygonBrush, FilledRectangleBrush, FreehandBrush, LineBrush]
-        self.TEMP_BRUSH_ID = 0
+        #self.brush_options = [PolygonBrush, FilledRectangleBrush, FreehandBrush, LineBrush]
+        #self.brush_options = [NewLineBrush]
+        self.brush_id = 0
+        self.brushes = []
+        self.brushes.append(PolygonBrush())
+        self.brushes.append(FilledRectangleBrush())
+        self.brushes.append(LineBrush())
+        self.brushes.append(FreehandBrush())
+        self.active_tool = self.brushes[0]
 
         self.connect("destroy", Gtk.main_quit)
         # 'brushes' is a list of objects which contain 'draw' methods.
-        self.brushes = []
+
         self.set_title(title)
         self.screen = self.get_screen() # type: GdkX11.X11Screen
         s = Gdk.Screen.get_default()
 
         self.set_size_request(s.get_width(), s.get_height())  # unresizeable
-        self.active_tool = None
-        self.transient = False
+        self.pass_through = False
 
         visual = self.screen.get_rgba_visual()
         if visual and self.screen.is_composited():
             self.set_visual(visual)
-            if self.transient:
+            if self.pass_through:
                 self.input_shape_combine_region(cairo.Region())
 
         self.set_decorated(False)
@@ -95,12 +104,12 @@ class Veil(Gtk.Window):
         self.show()
 
     def toggle_transient(self):
-        if self.transient:
+        if self.pass_through:
             self.input_shape_combine_region(cairo.Region())
-            self.transient = True
+            self.pass_through = True
         else:
             self.input_shape_combine_region(None)
-            self.transient = False
+            self.pass_through = False
 
     def veil_update(self, widget, ctx):
         ctx.set_source_rgba(0, 0, 0, 0)
@@ -109,7 +118,7 @@ class Veil(Gtk.Window):
         ctx.fill()
         ctx.set_operator(cairo.OPERATOR_OVER)
         self.draw_brushes(ctx)
-        if self.transient:
+        if self.pass_through:
             self.draw_border(ctx)
             #self.draw_header(ctx)
 
@@ -124,7 +133,6 @@ class Veil(Gtk.Window):
         if self.active_tool:
             if isinstance(self.active_tool, Brush):
                 self.active_tool.draw(ctx)
-
 
 #-header stuff-----------------------------------------------------------------
     def draw_border(self, ctx):
@@ -151,7 +159,7 @@ class Veil(Gtk.Window):
     def mouse_press(self, widget, event):
         if event.button == Gdk.BUTTON_PRIMARY:
             if not self.active_tool:
-                self.active_tool = self.brush_options[self.TEMP_BRUSH_ID](event)
+                pass
             else:
                 self.active_tool.mouse_primary(self, event)
         elif event.button == Gdk.BUTTON_SECONDARY:
@@ -178,13 +186,20 @@ class Veil(Gtk.Window):
             Gtk.main_quit()
         if Gdk.ModifierType.CONTROL_MASK:
             if key == 'z':
-                if len(self.brushes) > 0:
-                    self.brushes.pop()
+                if self.active_tool:
+                    self.active_tool.undo()
                     self.queue_draw()
-            elif key == 'b':
-                self.TEMP_BRUSH_ID += 1
-                if self.TEMP_BRUSH_ID > len(self.brush_options)-1:
-                    self.TEMP_BRUSH_ID = 0
+            if key == 'b':
+                self.brush_id += 1
+                if self.brush_id >= len(self.brushes):
+                    self.brush_id = 0
+                self.active_tool = self.brushes[self.brush_id]
+        if key == 'space':
+            self.brush_id += 1
+            if self.brush_id >= len(self.brushes):
+                self.brush_id = 0
+            self.active_tool = self.brushes[self.brush_id]
+            print(self.active_tool.name)
 
     def key_release(self, widget, event):
         key = Gdk.keyval_name(event.keyval)

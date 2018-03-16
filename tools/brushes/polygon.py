@@ -2,135 +2,148 @@ import cairo
 from tools.brushes import Brush
 from math import pi, hypot
 
+#TODO
+# mouse_secondary -> cancel current stroke
+#
 
-class PolygonBrush(Brush):
-    def __init__(self, event, edge_width=3, edge_color=None, fill_color=None, sensitivity=20):
-        super(PolygonBrush, self).__init__()
+class PolygonImage():
+    def __init__(self, origin, edge_width, edge_color, fill_color, sensitivity):
+        self.is_complete_eligible = False
+        self.is_in_complete_range = True
+        self.is_complete = False
         self.sensitivity = sensitivity
         self.edge_width = edge_width
-
-        self._complete_eligible = False
-        self._in_complete_range = True
-        self._is_complete = False
-        if edge_color:
-            self.edge_color = edge_color
-        else:
-            self.edge_color = self.random_color_transparent(.7)
-        if fill_color:
-            self.fill_color = fill_color
-        else:
-            self.fill_color = self.random_color_transparent(.2)
-
-        self.x_origin = event.x
-        self.y_origin = event.y
-
-        self.x_current = event.x
-        self.y_current = event.y
-
+        self.edge_color = edge_color
+        self.fill_color = fill_color
+        self.x_origin = origin.x
+        self.y_origin = origin.y
+        self.x_current = origin.x
+        self.y_current = origin.y
         self.points = []
-        self.capturing_movement = True
+
+    def determine_distance_eligible(self):
+        if hypot(self.x_current - self.x_origin, self.y_current - self.y_origin) < self.sensitivity:
+            self.is_in_complete_range = True
+        else:
+            self.is_in_complete_range = False
+
+    def determine_complete_eligibile(self):
+        if len(self.points) >= 3:
+            self.is_complete_eligible = True
+        else:
+            self.is_complete_eligible = False
+
+
+class PolygonBrush(Brush):
+    def __init__(self, edge_width=3, edge_color=None, fill_color=None, sensitivity=20):
+        super(PolygonBrush, self).__init__()
+        self.name = "Polygon"
+        self.sensitivity = sensitivity
+        self.edge_width = edge_width
+        self.edge_color = edge_color
+        self.fill_color = fill_color
+        self.active_stroke = None
+        self.images = []
+
+    def mouse_primary(self, veil, event):
+        if not self.active_stroke:
+            self.active_stroke = PolygonImage(event, self.edge_width, self.edge_color, self.fill_color, self.sensitivity)
+            if not self.edge_color:
+                self.active_stroke.edge_color = self.random_color_transparent(.7)
+            if not self.fill_color:
+                self.active_stroke.fill_color = self.random_color_transparent(.2)
+            self.images.append(self.active_stroke)
+            self.capturing_movement = True
+        else:
+            pass
 
     def mouse_move(self, veil, event):
-        self.x_current = event.x
-        self.y_current = event.y
-
-        distance_from_origin = hypot(self.x_current - self.x_origin, self.y_current - self.y_origin)
-
-        if distance_from_origin < self.sensitivity:
-            self._in_complete_range = True
-        else:
-            self._in_complete_range = False
-        veil.queue_draw()
-
-    '''
-    def mouse_primary(self, veil, event):
-        if self._in_complete_range & self._complete_eligible:
-            self.x_current = self.x_origin
-            self.y_current = self.y_origin
-            self._is_complete = True
-            self.finish(veil)
-        else:
-            self.polygon.append((self.x_current, self.y_current))
-        if len(self.polygon) > 2:
-            self._complete_eligible = True
-        veil.queue_draw()
-    '''
+        if self.active_stroke:
+            self.active_stroke.x_current = event.x
+            self.active_stroke.y_current = event.y
+            self.active_stroke.determine_distance_eligible()
+            self.active_stroke.determine_complete_eligibile()
+            veil.queue_draw()
 
     def mouse_release(self, veil, event):
-        if len(self.points) == 0:
-            self.x_origin = event.x
-            self.y_origin = event.y
-            self.add_point(self.x_origin, self.y_origin)
+        if not self.active_stroke:
+            return
+        if len(self.active_stroke.points) == 0:
+            self.active_stroke.x_origin = event.x
+            self.active_stroke.y_origin = event.y
+            self.active_stroke.points.append((event.x, event.y))
 
-        elif self._in_complete_range:
-            if self._complete_eligible:
-                self.x_current = self.x_origin
-                self.y_current = self.y_origin
-                self._is_complete = True
-                self.POINTS_DRAGGABLE = True
-                self.finish(veil)
-
-                if not self._complete_eligible:
-                    pass
-
+        elif self.active_stroke.is_in_complete_range:
+            if self.active_stroke.is_complete_eligible:
+                self.active_stroke.x_current = self.active_stroke.x_origin
+                self.active_stroke.y_current = self.active_stroke.y_origin
+                self.active_stroke.is_complete = True
+                self.active_stroke = None
         else:
-            self.add_point(self.x_current, self.y_current)
-            if len(self.points) > 2:
-                self._complete_eligible = True
+            self.active_stroke.points.append((self.active_stroke.x_current, self.active_stroke.y_current))
+            self.active_stroke.determine_complete_eligibile()
 
         veil.queue_draw()
 
     def mouse_secondary(self, veil, event):
-        self.cancel(veil)
+        if self.active_stroke:
+            self.active_stroke = None
+            self.images.pop()
+            veil.queue_draw()
 
-    def draw(self, ctx):
+
+    def draw_polygon(self, image, ctx):
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         ctx.set_line_width(self.edge_width)
 
-        if len(self.points) < 1:
+        if len(image.points) < 1:
             ctx.set_source_rgba(1, 0, 0, .5)
-            ctx.arc(self.x_current, self.y_current, self.sensitivity, 0, 2 * pi)
+            ctx.arc(image.x_current, image.y_current, image.sensitivity, 0, 2 * pi)
             ctx.fill()
             ctx.set_source_rgba(0, 1, 0, .5)
-            ctx.arc(self.x_current, self.y_current, self.sensitivity, 0, 2 * pi)
+            ctx.arc(image.x_current, image.y_current, image.sensitivity, 0, 2 * pi)
             ctx.stroke()
 
-        elif not self._is_complete:
-            if self._in_complete_range:
-                if self._complete_eligible:
+        elif not image.is_complete:
+            if image.is_in_complete_range:
+                if image.is_complete_eligible:
                     ctx.set_source_rgba(0, 1, 0, .5)
                 else:
                     ctx.set_source_rgba(1, 0, 0, .5)
             else:
                 ctx.set_source_rgba(1, 1, 1, .5)
 
-            ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
+            ctx.arc(image.x_origin, image.y_origin, image.sensitivity, 0, 2 * pi)
             ctx.fill()
             ctx.set_source_rgba(0, 1, 0, .5)
-            ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
+            ctx.arc(image.x_origin, image.y_origin, image.sensitivity, 0, 2 * pi)
             ctx.stroke()
 
         else:
-            ctx.set_source_rgba(*self.fill_color)
-            ctx.move_to(self.x_origin, self.y_origin)
+            ctx.set_source_rgba(*image.fill_color)
+            ctx.move_to(image.x_origin, image.y_origin)
 
-            for point in self.points:
+            for point in image.points:
                 ctx.line_to(*point)
-            if len(self.points) > 1:
-                ctx.line_to(self.x_current, self.y_current)
+            if len(image.points) > 1:
+                ctx.line_to(image.x_current, image.y_current)
             ctx.fill()
 
-        ctx.set_source_rgba(*self.edge_color)
+        ctx.set_source_rgba(*image.edge_color)
 
-        ctx.move_to(self.x_origin, self.y_origin)
+        ctx.move_to(image.x_origin, image.y_origin)
 
-        for point in self.points:
+        for point in image.points:
             ctx.line_to(*point)
 
-        if len(self.points) >= 1:
-            ctx.line_to(self.x_current, self.y_current)
+        if len(image.points) >= 1:
+            ctx.line_to(image.x_current, image.y_current)
         ctx.stroke()
 
-    def add_point(self, x, y):
-        if (x, y) not in self.points:
-            self.points.append((x, y))
+    def draw(self, ctx):
+        for image in self.images:
+            self.draw_polygon(image, ctx)
+
+    def undo(self):
+        if len(self.images) > 0:
+            self.images.pop()

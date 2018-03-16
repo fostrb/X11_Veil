@@ -11,9 +11,10 @@ class LineImage():
         self.y_end = y_end
 
 
-class NewLineBrush(Brush):
+class LineBrush(Brush):
     def __init__(self, width=8, color=None):
-        super(NewLineBrush, self).__init__()
+        super(LineBrush, self).__init__()
+        self.name = "Line"
         self.o_color = color
         self.width = width
         if color:
