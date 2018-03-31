@@ -65,6 +65,8 @@ class Veil(Gtk.Window):
         self.set_title(title)
         self.screen = self.get_screen() # type: GdkX11.X11Screen
         s = Gdk.Screen.get_default()
+        self.width = s.get_width()
+        self.height = s.get_height()
         #self.set_size_request(s.get_width(), s.get_height())  # unresizeable
         self.fullscreen()
         self.pass_through = False
@@ -122,7 +124,8 @@ class Veil(Gtk.Window):
         self.draw_images(ctx)
         if not self.pass_through:
             self.draw_border(ctx)
-            self.draw_header(ctx)
+            #self.draw_header(ctx)
+            self.draw_grid(ctx)
 
     def execute_tools(self, ctx):
         if self.active_tool:
@@ -152,6 +155,26 @@ class Veil(Gtk.Window):
             ctx.move_to(0, 13)
             ctx.show_text("Veil")
             ctx.stroke()
+
+    def draw_grid(self, ctx):
+        print("drawing")
+        ctx.set_line_width(1)
+        ctx.set_source_rgba(0, 1, 0, 0.1)
+
+        #number of lines
+        wlines = int(self.width/20)
+        for line in range(1, wlines):
+            ctx.move_to(line*20, 0)
+            ctx.line_to(line*20, self.height)
+            ctx.stroke()
+            #ctx.new_path()
+
+        hlines = int(self.height / 20)
+        for line in range(1, hlines):
+            ctx.move_to(0, line*20)
+            ctx.line_to(self.width, line*20)
+            ctx.stroke()
+            #ctx.new_path()
 #------------------------------------------------------------------------------
 
 #-event handling--------------------------------------------------------------
@@ -222,5 +245,5 @@ class Veil(Gtk.Window):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = Veil()
-    #Gtk.main()
+    Gtk.main()
     sys.exit(0)
