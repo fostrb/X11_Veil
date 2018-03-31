@@ -71,6 +71,7 @@ class Veil(Gtk.Window):
         self.fullscreen()
         self.pass_through = False
         self.hidden = False
+        self.grid = False
 
         visual = self.screen.get_rgba_visual()
         if visual and self.screen.is_composited():
@@ -125,6 +126,7 @@ class Veil(Gtk.Window):
         if not self.pass_through:
             self.draw_border(ctx)
             #self.draw_header(ctx)
+        if self.grid:
             self.draw_grid(ctx)
 
     def execute_tools(self, ctx):
@@ -157,24 +159,25 @@ class Veil(Gtk.Window):
             ctx.stroke()
 
     def draw_grid(self, ctx):
-        print("drawing")
         ctx.set_line_width(1)
         ctx.set_source_rgba(0, 1, 0, 0.1)
 
-        #number of lines
-        wlines = int(self.width/20)
-        for line in range(1, wlines):
-            ctx.move_to(line*20, 0)
-            ctx.line_to(line*20, self.height)
-            ctx.stroke()
-            #ctx.new_path()
+        # number of pixels per grid interval
+        grid_interval = 40
 
-        hlines = int(self.height / 20)
-        for line in range(1, hlines):
-            ctx.move_to(0, line*20)
-            ctx.line_to(self.width, line*20)
+        wlines = int(self.width/grid_interval)
+        for line in range(1, wlines):
+            ctx.move_to(line*grid_interval, 0)
+            ctx.line_to(line*grid_interval, self.height)
             ctx.stroke()
-            #ctx.new_path()
+            # ctx.new_path()
+
+        hlines = int(self.height / grid_interval)
+        for line in range(1, hlines):
+            ctx.move_to(0, line*grid_interval)
+            ctx.line_to(self.width, line*grid_interval)
+            ctx.stroke()
+            # ctx.new_path()
 #------------------------------------------------------------------------------
 
 #-event handling--------------------------------------------------------------
@@ -218,6 +221,12 @@ class Veil(Gtk.Window):
                 if self.brush_id >= len(self.brushes):
                     self.brush_id = 0
                 self.active_tool = self.brushes[self.brush_id]
+            if key == 'g':
+                if self.grid:
+                    self.grid = False
+                else:
+                    self.grid = True
+                self.queue_draw()
         if key == 'space':
             self.brush_id += 1
             if self.brush_id >= len(self.brushes):
