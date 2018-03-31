@@ -6,26 +6,14 @@ import dbus
 import os
 import signal
 
-
 def main():
-    """Parses the command line parameters and decide if dbus methods
-    should be called or not. If there is already a guake instance
-    running it will be used and a True value will be returned,
-    otherwise, false will be returned.
-    """
-    # Force to xterm-256 colors for compatibility with some old command line programs
-    os.environ["TERM"] = "xterm-256color"
-
-    # do not use version keywords here, pbr might be slow to find the version of Guake module
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", '--togglevisibility', dest='toggle', action='store_true', default=False, help='Toggles visibility')
     parser.add_argument("-x", '--togglepass', dest='togglepass', action='store_true', default=False, help='Toggles passthrough')
     args = parser.parse_args()
 
     instance = None
-    # Trying to get an already running instance of Veil. If it is not
-    # possible, lets create a new instance. This function will return
-    # a boolean value depending on this decision.
+    remote_object = None
     try:
         bus = dbus.SessionBus()
         remote_object = bus.get_object(DBUS_NAME, DBUS_PATH)
@@ -36,14 +24,17 @@ def main():
         remote_object = DbusManager(instance)
         already_running = False
 
-    if args.toggle:
-        remote_object.show_hide()
+    try:
+        if args.toggle:
+            remote_object.show_hide()
 
-    if args.togglepass:
-        remote_object.toggle_passthrough()
+        if args.togglepass:
+            remote_object.toggle_passthrough()
 
-    if not already_running:
-        remote_object.show_hide()
+        if not already_running:
+            remote_object.show_hide()
+    except:
+        return None
     return already_running
 
 

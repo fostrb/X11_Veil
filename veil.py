@@ -122,7 +122,7 @@ class Veil(Gtk.Window):
         self.draw_images(ctx)
         if not self.pass_through:
             self.draw_border(ctx)
-            #self.draw_header(ctx)
+            self.draw_header(ctx)
 
     def execute_tools(self, ctx):
         if self.active_tool:
