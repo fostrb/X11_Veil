@@ -1,14 +1,6 @@
-import cairo
 from tools.brushes import Brush
-
-class LineImage():
-    def __init__(self, color, width, x_origin, y_origin, x_end, y_end):
-        self.color = color
-        self.width = width
-        self.x_origin = x_origin
-        self.y_origin = y_origin
-        self.x_end = x_end
-        self.y_end = y_end
+import cairo
+from images.line import LineImage
 
 
 class LineBrush(Brush):
@@ -21,7 +13,7 @@ class LineBrush(Brush):
             self.color = color
         else:
             self.color = self.random_color_transparent(.5)
-        self.strokes = []
+        self.images = []
         self.active_stroke = None
 
     def mouse_primary(self, veil, event):
@@ -29,7 +21,8 @@ class LineBrush(Brush):
             pass
         else:
             self.active_stroke = LineImage(self.color, self.width, event.x, event.y, event.x, event.y)
-            self.strokes.append(self.active_stroke)
+            veil.images.append(self.active_stroke)
+            #self.images.append(self.active_stroke)
             if not self.o_color:
                 self.active_stroke.color = self.random_color_transparent(.5)
 
@@ -61,10 +54,10 @@ class LineBrush(Brush):
 
     def draw(self, ctx):
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-        for stroke in self.strokes:
-            self.draw_line(ctx, stroke)
+        for image in self.images:
+            image.draw(ctx)
 
     def undo(self):
-        if len(self.strokes) > 0:
-            self.strokes.pop()
+        if len(self.images) > 0:
+            self.images.pop()
 

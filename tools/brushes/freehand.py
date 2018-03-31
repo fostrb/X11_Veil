@@ -1,12 +1,5 @@
-import cairo
 from tools.brushes.brush import Brush
-
-
-class FreehandImage():
-    def __init__(self, width, color, points):
-        self.points = points
-        self.width = width
-        self.color = color
+from images.freehand import FreehandImage
 
 
 class FreehandBrush(Brush):
@@ -22,11 +15,9 @@ class FreehandBrush(Brush):
         if self.active_stroke:
             pass
         else:
-            self.active_stroke = FreehandImage(self.width, self.color, [])
-            self.active_stroke.points.append((event.x, event.y))
-            self.images.append(self.active_stroke)
-        if not self.active_stroke.color:
-            self.active_stroke.color = self.random_color_transparent(.5)
+            self.active_stroke = FreehandImage(self.width, self.color, [[event.x, event.y]])
+            #self.images.append(self.active_stroke)
+            veil.images.append(self.active_stroke)
 
     def mouse_secondary(self, veil, event):
         pass
@@ -39,19 +30,9 @@ class FreehandBrush(Brush):
         self.active_stroke = None
         veil.queue_draw()
 
-    def draw_freehand(self, image, ctx):
-        ctx.set_source_rgba(*image.color)
-        ctx.set_line_width(image.width)
-        ctx.set_line_cap(1)
-        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.new_path()
-        for x, y in image.points:
-            ctx.line_to(x, y)
-        ctx.stroke()
-
     def draw(self, ctx):
         for image in self.images:
-            self.draw_freehand(image, ctx)
+            image.draw(ctx)
 
     def undo(self):
         if len(self.images) > 0:

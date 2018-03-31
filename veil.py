@@ -7,6 +7,7 @@ import gi; gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 from gi.repository import GdkX11
 import cairo
+#from gi.repository import Vte
 
 
 # Veil; Fuck your x11 windows all up
@@ -17,24 +18,23 @@ import cairo
 #
 # Ben Foster
 
+
 '''
-TODO:
 -Add more type hinting for python IDEs
 
 Functionality:
--Tell Veil to toggle active from an external process (and hot-key that to a keypress)
-    Look into Guake source code for key-binding + settings
+-Better key binding.
 
--(better) brush selector
+-Better brush selector
 
 -Tools:
     -Brushes to write:
         -text input
     -Transformers:
         -Point drag+translate of existing vectors
-            --(requires modification of existing brushes)
+            --(requires modification of existing Images)
         -Drag individual vectors
-            --(requires slight modification of existing brushes)
+            --(requires slight modification of existing Images)
     -Selectors
         -Define scope in relation to other tools and decide if necessary.
 
@@ -47,7 +47,6 @@ Aesthetics:
 
 
 BUGS:
--'button-press-event' being sent twice per click.
 '''
 
 logging.basicConfig(level=logging.DEBUG)
@@ -57,38 +56,33 @@ LOG = logging.getLogger(__name__)
 class Veil(Gtk.Window):
     def __init__(self, title='veil'):
         super(Veil, self).__init__()
-        #self.brush_options = [PolygonBrush, FilledRectangleBrush, FreehandBrush, LineBrush]
-        #self.brush_options = [NewLineBrush]
         self.brush_id = 0
-        self.brushes = []
-        self.brushes.append(PolygonBrush())
-        self.brushes.append(FilledRectangleBrush())
-        self.brushes.append(LineBrush())
-        self.brushes.append(FreehandBrush())
+        self.brushes = [PolygonBrush(), FilledRectangleBrush(), LineBrush(), FreehandBrush()]
         self.active_tool = self.brushes[0]
+        self.images = []
 
         self.connect("destroy", Gtk.main_quit)
-        # 'brushes' is a list of objects which contain 'draw' methods.
-
         self.set_title(title)
         self.screen = self.get_screen() # type: GdkX11.X11Screen
         s = Gdk.Screen.get_default()
-
         self.set_size_request(s.get_width(), s.get_height())  # unresizeable
+        self.fullscreen()
         self.pass_through = False
+        self.hidden = False
 
         visual = self.screen.get_rgba_visual()
         if visual and self.screen.is_composited():
             self.set_visual(visual)
             if self.pass_through:
-                self.input_shape_combine_region(cairo.Region())
+               self.input_shape_combine_region(cairo.Region())
 
-        self.set_decorated(False)
+        #self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_keep_above(True)
         self.connect('draw', self.veil_update)
 
-        self.fullscreen()
+        #self.fullscreen()
+
 
         self.connect('button-press-event', self.mouse_press)
         self.connect('motion-notify-event', self.mouse_move)
@@ -103,13 +97,24 @@ class Veil(Gtk.Window):
                         Gdk.EventMask.KEY_RELEASE_MASK)
         self.show()
 
-    def toggle_transient(self):
-        if self.pass_through:
+    def toggle_pass_through(self):
+        if not self.pass_through:
             self.input_shape_combine_region(cairo.Region())
             self.pass_through = True
         else:
             self.input_shape_combine_region(None)
             self.pass_through = False
+        self.queue_draw()
+
+    def show_hide(self):
+        if not self.hidden:
+            self.hidden = True
+            self.unstick()
+            self.hide()
+        else:
+            self.hidden = False
+            self.stick()
+            self.show_all()
 
     def veil_update(self, widget, ctx):
         ctx.set_source_rgba(0, 0, 0, 0)
@@ -117,22 +122,19 @@ class Veil(Gtk.Window):
         ctx.set_operator(cairo.OPERATOR_CLEAR)
         ctx.fill()
         ctx.set_operator(cairo.OPERATOR_OVER)
-        self.draw_brushes(ctx)
-        if self.pass_through:
+        self.draw_images(ctx)
+        if not self.pass_through:
             self.draw_border(ctx)
             #self.draw_header(ctx)
 
     def execute_tools(self, ctx):
         if self.active_tool:
-            if isinstance(self.active_tool, Tool):
-                print()
-
-    def draw_brushes(self, ctx):
-        for brush in self.brushes:
-            brush.draw(ctx)
-        if self.active_tool:
             if isinstance(self.active_tool, Brush):
-                self.active_tool.draw(ctx)
+                pass
+
+    def draw_images(self, ctx):
+        for image in self.images:
+            image.draw(ctx)
 
 #-header stuff-----------------------------------------------------------------
     def draw_border(self, ctx):
@@ -186,9 +188,8 @@ class Veil(Gtk.Window):
             Gtk.main_quit()
         if Gdk.ModifierType.CONTROL_MASK:
             if key == 'z':
-                if self.active_tool:
-                    self.active_tool.undo()
-                    self.queue_draw()
+                self.undo()
+                self.queue_draw()
             if key == 'b':
                 self.brush_id += 1
                 if self.brush_id >= len(self.brushes):
@@ -206,8 +207,15 @@ class Veil(Gtk.Window):
 #------------------------------------------------------------------------------
 
 
+#-veil internal macros---------------------------------------------------------
+    def undo(self):
+        if len(self.images) > 0:
+            self.images.pop()
+#------------------------------------------------------------------------------
+
+
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = Veil()
-    Gtk.main()
+    #Gtk.main()
     sys.exit(0)
