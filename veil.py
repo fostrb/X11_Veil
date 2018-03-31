@@ -190,6 +190,9 @@ class Veil(Gtk.Window):
             if key == 'z':
                 self.undo()
                 self.queue_draw()
+            if key == 'x':
+                self.clear()
+                self.queue_draw()
             if key == 'b':
                 self.brush_id += 1
                 if self.brush_id >= len(self.brushes):
@@ -211,6 +214,9 @@ class Veil(Gtk.Window):
     def undo(self):
         if len(self.images) > 0:
             self.images.pop()
+
+    def clear(self):
+        self.images = []
 #------------------------------------------------------------------------------
 
 
