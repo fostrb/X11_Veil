@@ -30,7 +30,7 @@ class PolygonImage(Image):
         else:
             self.is_in_complete_range = False
 
-    def determine_complete_eligibile(self):
+    def determine_complete_eligible(self):
         if len(self.points) >= 3:
             self.is_complete_eligible = True
         else:

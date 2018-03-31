@@ -33,7 +33,3 @@ class FreehandBrush(Brush):
     def draw(self, ctx):
         for image in self.images:
             image.draw(ctx)
-
-    def undo(self):
-        if len(self.images) > 0:
-            self.images.pop()

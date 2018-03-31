@@ -40,7 +40,3 @@ class FilledRectangleBrush(Brush):
 
     def finish(self, veil):
         self.active_stroke = None
-
-    def undo(self):
-        if len(self.images) > 0:
-            self.images.pop()

@@ -65,7 +65,7 @@ class Veil(Gtk.Window):
         self.set_title(title)
         self.screen = self.get_screen() # type: GdkX11.X11Screen
         s = Gdk.Screen.get_default()
-        self.set_size_request(s.get_width(), s.get_height())  # unresizeable
+        #self.set_size_request(s.get_width(), s.get_height())  # unresizeable
         self.fullscreen()
         self.pass_through = False
         self.hidden = False
@@ -74,15 +74,12 @@ class Veil(Gtk.Window):
         if visual and self.screen.is_composited():
             self.set_visual(visual)
             if self.pass_through:
-               self.input_shape_combine_region(cairo.Region())
+                self.input_shape_combine_region(cairo.Region())
 
-        #self.set_decorated(False)
+        self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_keep_above(True)
         self.connect('draw', self.veil_update)
-
-        #self.fullscreen()
-
 
         self.connect('button-press-event', self.mouse_press)
         self.connect('motion-notify-event', self.mouse_move)
@@ -214,6 +211,8 @@ class Veil(Gtk.Window):
     def undo(self):
         if len(self.images) > 0:
             self.images.pop()
+            if self.active_tool:
+                self.active_tool.active_stroke = None
 
     def clear(self):
         self.images = []
