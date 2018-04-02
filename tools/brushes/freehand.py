@@ -8,7 +8,6 @@ class FreehandBrush(Brush):
         self.name = "Freehand"
         self.width = width
         self.color = color
-        self.images = []
         self.active_stroke = None
 
     def mouse_primary(self, veil, event):
@@ -16,7 +15,6 @@ class FreehandBrush(Brush):
             pass
         else:
             self.active_stroke = FreehandImage(self.width, self.color, [[event.x, event.y]])
-            #self.images.append(self.active_stroke)
             veil.images.append(self.active_stroke)
 
     def mouse_secondary(self, veil, event):
@@ -29,7 +27,3 @@ class FreehandBrush(Brush):
     def mouse_release(self, veil, event):
         self.active_stroke = None
         veil.queue_draw()
-
-    def draw(self, ctx):
-        for image in self.images:
-            image.draw(ctx)

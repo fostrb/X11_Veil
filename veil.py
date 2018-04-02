@@ -57,7 +57,7 @@ class Veil(Gtk.Window):
     def __init__(self, title='veil'):
         super(Veil, self).__init__()
         self.brush_id = 0
-        self.brushes = [PolygonBrush(), FilledRectangleBrush(), LineBrush(), FreehandBrush()]
+        self.brushes = [PolygonBrush(), FilledRectangleBrush(), LineBrush(), FreehandBrush(), CircleBrush()]
         self.active_tool = self.brushes[0]
         self.images = []
 
@@ -72,6 +72,9 @@ class Veil(Gtk.Window):
         self.pass_through = False
         self.hidden = False
         self.grid = False
+
+        self.rgbtheme = [0, 1, 0]
+        self.rgbatheme = [0, 1, 0, 0.1]
 
         visual = self.screen.get_rgba_visual()
         if visual and self.screen.is_composited():
@@ -125,7 +128,7 @@ class Veil(Gtk.Window):
         self.draw_images(ctx)
         if not self.pass_through:
             self.draw_border(ctx)
-            #self.draw_header(ctx)
+            self.draw_header(ctx)
         if self.grid:
             self.draw_grid(ctx)
 
@@ -146,21 +149,23 @@ class Veil(Gtk.Window):
         ctx.stroke()
 
     def draw_header(self, ctx):
-        ctx.set_source_rgb(0, 1, 0)
+        ctx.set_source_rgba(*self.rgbtheme, .2)
         ctx.rectangle(0, 0, self.get_size()[0], 16)
         ctx.fill()
-        print_text = False
+        print_text = True
         if print_text:
-            ctx.set_source_rgb(0, 0, 0)
+            ctx.set_source_rgb(1, 0, 1)
             ctx.select_font_face("Inconsolata", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
             ctx.set_font_size(16)
-            ctx.move_to(0, 13)
-            ctx.show_text("Veil")
+            ctx.move_to(self.width/2-(len(self.active_tool.name)/2), 13)
+            if self.active_tool:
+                ctx.show_text(self.active_tool.name)
             ctx.stroke()
 
     def draw_grid(self, ctx):
         ctx.set_line_width(1)
-        ctx.set_source_rgba(0, 1, 0, 0.1)
+        #ctx.set_source_rgba(0, 1, 0, 0.1)
+        ctx.set_source_rgba(*self.rgbatheme)
 
         # number of pixels per grid interval
         grid_interval = 40
@@ -233,6 +238,7 @@ class Veil(Gtk.Window):
                 self.brush_id = 0
             self.active_tool = self.brushes[self.brush_id]
             print(self.active_tool.name)
+            self.queue_draw()
 
     def key_release(self, widget, event):
         key = Gdk.keyval_name(event.keyval)

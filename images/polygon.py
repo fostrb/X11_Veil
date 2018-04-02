@@ -31,15 +31,15 @@ class PolygonImage(Image):
             self.is_in_complete_range = False
 
     def determine_complete_eligible(self):
-        if len(self.points) >= 3:
+        if len(self.points) >= 4:
             self.is_complete_eligible = True
         else:
             self.is_complete_eligible = False
 
     def draw(self, ctx):
+        ctx.set_line_width(self.edge_width)
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.set_line_width(self.edge_width)
 
         if len(self.points) < 1:
             ctx.set_source_rgba(1, 0, 0, .5)
@@ -49,38 +49,40 @@ class PolygonImage(Image):
             ctx.arc(self.x_current, self.y_current, self.sensitivity, 0, 2 * pi)
             ctx.stroke()
 
-        elif not self.is_complete:
-            if self.is_in_complete_range:
-                if self.is_complete_eligible:
-                    ctx.set_source_rgba(0, 1, 0, .5)
-                else:
-                    ctx.set_source_rgba(1, 0, 0, .5)
-            else:
-                ctx.set_source_rgba(1, 1, 1, .5)
-
-            ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
-            ctx.fill()
-            ctx.set_source_rgba(0, 1, 0, .5)
-            ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
-            ctx.stroke()
-
         else:
-            ctx.set_source_rgba(*self.fill_color)
+            if not self.is_complete:
+                if self.is_in_complete_range:
+                    if self.is_complete_eligible:
+                        ctx.set_source_rgba(0, 1, 0, .5)
+                    else:
+                        ctx.set_source_rgba(1, 0, 0, .5)
+                else:
+                    ctx.set_source_rgba(1, 1, 1, .5)
+
+                ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
+                ctx.fill()
+                ctx.set_source_rgba(0, 1, 0, .5)
+                ctx.arc(self.x_origin, self.y_origin, self.sensitivity, 0, 2 * pi)
+                ctx.stroke()
+
+
+
+            else:
+                ctx.set_source_rgba(*self.fill_color)
+                ctx.move_to(self.x_origin, self.y_origin)
+
+                for point in self.points:
+                    ctx.line_to(*point)
+                if len(self.points) > 1:
+                    ctx.line_to(self.x_current, self.y_current)
+                ctx.fill()
+
+            ctx.set_source_rgba(*self.edge_color)
+
             ctx.move_to(self.x_origin, self.y_origin)
 
             for point in self.points:
                 ctx.line_to(*point)
-            if len(self.points) > 1:
-                ctx.line_to(self.x_current, self.y_current)
-            ctx.fill()
 
-        ctx.set_source_rgba(*self.edge_color)
-
-        ctx.move_to(self.x_origin, self.y_origin)
-
-        for point in self.points:
-            ctx.line_to(*point)
-
-        if len(self.points) >= 1:
             ctx.line_to(self.x_current, self.y_current)
-        ctx.stroke()
+            ctx.stroke()

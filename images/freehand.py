@@ -15,9 +15,9 @@ class FreehandImage(Image):
     def draw(self, ctx):
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.set_source_rgba(*self.color)
         ctx.set_line_width(self.width)
         ctx.new_path()
+        ctx.set_source_rgba(*self.color)
         for x, y in self.points:
             ctx.line_to(x, y)
         ctx.stroke()
