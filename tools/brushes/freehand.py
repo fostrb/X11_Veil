@@ -1,9 +1,10 @@
 from tools.brushes.brush import Brush
 from images.freehand import FreehandImage
+from images.glowscribble import GlowScribble
 
 
 class FreehandBrush(Brush):
-    def __init__(self, width=8, color=None):
+    def __init__(self, width=7, color=None):
         super(FreehandBrush, self).__init__()
         self.name = "Freehand"
         self.width = width
@@ -14,7 +15,7 @@ class FreehandBrush(Brush):
         if self.active_stroke:
             pass
         else:
-            self.active_stroke = FreehandImage(self.width, self.color, [[event.x, event.y]])
+            self.active_stroke = FreehandImage(self.width, self.color, [[event.x, event.y]], glow=veil.glow)
             veil.images.append(self.active_stroke)
 
     def mouse_secondary(self, veil, event):

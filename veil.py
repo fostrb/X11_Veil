@@ -69,9 +69,12 @@ class Veil(Gtk.Window):
         self.height = s.get_height()
         #self.set_size_request(s.get_width(), s.get_height())  # unresizeable
         self.fullscreen()
+
+        # toggles, user-controlled vars
         self.pass_through = False
         self.hidden = False
         self.grid = False
+        self.glow = 0
 
         self.rgbtheme = [0, 1, 0]
         self.rgbatheme = [0, 1, 0, 0.1]
@@ -157,7 +160,7 @@ class Veil(Gtk.Window):
             ctx.set_source_rgb(1, 0, 1)
             ctx.select_font_face("Inconsolata", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
             ctx.set_font_size(16)
-            ctx.move_to(self.width/2-(len(self.active_tool.name)/2), 13)
+            ctx.move_to(self.width/4-(len(self.active_tool.name)/4), 13)
             if self.active_tool:
                 ctx.show_text(self.active_tool.name)
             ctx.stroke()
@@ -231,14 +234,21 @@ class Veil(Gtk.Window):
                     self.grid = False
                 else:
                     self.grid = True
-                self.queue_draw()
+            if key == 'Up':
+                self.glow += 1
+                for image in self.images:
+                    image.set_glow(self.glow)
+            if key == 'Down':
+                if self.glow >= 1:
+                    self.glow -= 1
+                for image in self.images:
+                    image.set_glow(self.glow)
         if key == 'space':
             self.brush_id += 1
             if self.brush_id >= len(self.brushes):
                 self.brush_id = 0
             self.active_tool = self.brushes[self.brush_id]
-            print(self.active_tool.name)
-            self.queue_draw()
+        self.queue_draw()
 
     def key_release(self, widget, event):
         key = Gdk.keyval_name(event.keyval)

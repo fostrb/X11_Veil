@@ -15,7 +15,7 @@ class CircleBrush(Brush):
         if self.active_stroke:
             pass
         else:
-            self.active_stroke = RadCircle(event, self.edge_width, self.edge_color, self.fill_color)
+            self.active_stroke = RadCircle(event, self.edge_width, self.edge_color, self.fill_color, glow=veil.glow)
             veil.images.append(self.active_stroke)
 
     def mouse_secondary(self, veil, event):

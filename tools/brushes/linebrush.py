@@ -1,5 +1,4 @@
 from tools.brushes import Brush
-import cairo
 from images.line import LineImage
 
 
@@ -16,7 +15,7 @@ class LineBrush(Brush):
         if self.active_stroke:
             pass
         else:
-            self.active_stroke = LineImage(self.color, self.width, event.x, event.y, event.x, event.y)
+            self.active_stroke = LineImage(self.color, self.width, event.x, event.y, event.x, event.y, glow=veil.glow)
             veil.images.append(self.active_stroke)
 
     def mouse_secondary(self, veil, event):

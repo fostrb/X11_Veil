@@ -18,7 +18,7 @@ class PolygonBrush(Brush):
 
     def mouse_primary(self, veil, event):
         if not self.active_stroke:
-            self.active_stroke = PolygonImage(event, self.edge_width, self.edge_color, self.fill_color, self.sensitivity)
+            self.active_stroke = PolygonImage(event, self.edge_width, self.edge_color, self.fill_color, self.sensitivity, glow=veil.glow)
             veil.images.append(self.active_stroke)
             self.capturing_movement = True
         else:

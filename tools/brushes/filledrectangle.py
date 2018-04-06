@@ -29,7 +29,7 @@ class FilledRectangleBrush(Brush):
         if self.active_stroke:
             pass
         else:
-            self.active_stroke = RectangleImage(self.edge_width, self.o_edge_color, self.o_fill_color, event.x, event.y)
+            self.active_stroke = RectangleImage(self.edge_width, self.o_edge_color, self.o_fill_color, event.x, event.y, glow=veil.glow)
             #self.images.append(self.active_stroke)
             veil.images.append(self.active_stroke)
         veil.queue_draw()
