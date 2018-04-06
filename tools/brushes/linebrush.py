@@ -3,7 +3,7 @@ from images.line import LineImage
 
 
 class LineBrush(Brush):
-    def __init__(self, width=8, color=None):
+    def __init__(self, width=5, color=None):
         super(LineBrush, self).__init__()
         self.name = "Line"
         self.o_color = color

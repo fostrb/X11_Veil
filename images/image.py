@@ -29,7 +29,7 @@ class Image(object):
 
     @staticmethod
     def random_strong_color(alpha):
-        c = randint(1, 6)
+        c = randint(1, 7)
         if c == 1:
             return 0, 0, 1, alpha
         elif c == 2:

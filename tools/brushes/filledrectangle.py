@@ -4,7 +4,7 @@ from images.rectangle import RectangleImage
 
 
 class FilledRectangleBrush(Brush):
-    def __init__(self, edge_width=2, edge_color=None, fill_color=None):
+    def __init__(self, edge_width=5, edge_color=None, fill_color=None):
         super(FilledRectangleBrush, self).__init__()
         self.name = "Filled Rectangle"
         self.edge_width = edge_width
@@ -30,7 +30,6 @@ class FilledRectangleBrush(Brush):
             pass
         else:
             self.active_stroke = RectangleImage(self.edge_width, self.o_edge_color, self.o_fill_color, event.x, event.y, glow=veil.glow)
-            #self.images.append(self.active_stroke)
             veil.images.append(self.active_stroke)
         veil.queue_draw()
 

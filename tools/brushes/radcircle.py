@@ -3,7 +3,7 @@ from images.radcircle import RadCircle
 
 
 class CircleBrush(Brush):
-    def __init__(self, edge_width=3, edge_color=None, fill_color=None):
+    def __init__(self, edge_width=5, edge_color=None, fill_color=None):
         super(CircleBrush, self).__init__()
         self.name = "CircleBrush"
         self.edge_width = edge_width

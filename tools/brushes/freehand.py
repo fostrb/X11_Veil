@@ -4,7 +4,7 @@ from images.glowscribble import GlowScribble
 
 
 class FreehandBrush(Brush):
-    def __init__(self, width=7, color=None):
+    def __init__(self, width=5, color=None):
         super(FreehandBrush, self).__init__()
         self.name = "Freehand"
         self.width = width

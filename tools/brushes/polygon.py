@@ -7,7 +7,7 @@ from images.polygon import PolygonImage
 
 
 class PolygonBrush(Brush):
-    def __init__(self, edge_width=3, edge_color=None, fill_color=None, sensitivity=20):
+    def __init__(self, edge_width=5, edge_color=None, fill_color=None, sensitivity=20):
         super(PolygonBrush, self).__init__()
         self.name = "Polygon"
         self.sensitivity = sensitivity
