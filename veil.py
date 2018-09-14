@@ -7,10 +7,9 @@ import gi; gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 from gi.repository import GdkX11
 import cairo
-#from gi.repository import Vte
 
 
-# Veil; Fuck your x11 windows all up
+# Veil; Desktop annotation
 #
 # Python3.5
 #   gtk, cairo
@@ -144,7 +143,7 @@ class Veil(Gtk.Window):
         for image in self.images:
             image.draw(ctx)
 
-#-header stuff-----------------------------------------------------------------
+# -header stuff-----------------------------------------------------------------
     def draw_border(self, ctx):
         ctx.set_line_width(2)
         ctx.set_source_rgb(0, 1, 0)
@@ -186,9 +185,9 @@ class Veil(Gtk.Window):
             ctx.line_to(self.width, line*grid_interval)
             ctx.stroke()
             # ctx.new_path()
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-#-event handling--------------------------------------------------------------
+# -event handling--------------------------------------------------------------
     def mouse_press(self, widget, event):
         if event.button == Gdk.BUTTON_PRIMARY:
             if not self.active_tool:
@@ -252,10 +251,10 @@ class Veil(Gtk.Window):
 
     def key_release(self, widget, event):
         key = Gdk.keyval_name(event.keyval)
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
-#-veil internal macros---------------------------------------------------------
+# -veil internal macros---------------------------------------------------------
     def undo(self):
         if len(self.images) > 0:
             self.images.pop()
@@ -264,7 +263,7 @@ class Veil(Gtk.Window):
 
     def clear(self):
         self.images = []
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
